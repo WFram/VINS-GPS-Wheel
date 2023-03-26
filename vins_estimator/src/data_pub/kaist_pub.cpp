@@ -1,10 +1,11 @@
 #include <vector>
 #include <thread>
+#include <fstream>
 #include <signal.h>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+//#include <opencv/cv.h>
 #include <opencv2/opencv.hpp>
+//#include <opencv2/highgui.hpp>
 #include <eigen3/Eigen/Dense>
 
 #include <ros/ros.h>
@@ -21,20 +22,16 @@ using namespace Eigen;
 const int nDelayTimes = 2;
 string sData_path = "/home/wallong/dataset/urban28/urban28-pankyo";
 
-bool LoadSensorData(string& sensor_data_file, unordered_map<string, string>* time_data_map)
-{
-    ifstream data_file(sensor_data_file);
-    if (!data_file.is_open())
-    {
+bool LoadSensorData(std::string &sensor_data_file, unordered_map <string, string> *time_data_map) {
+    std::ifstream data_file(sensor_data_file);
+    if (!data_file.is_open()) {
         cerr << "[LoadSensorData]: Failed to open sensor data file.";
         return false;
     }
     string line_str, time_str;
-    while (getline(data_file, line_str))
-    {
+    while (getline(data_file, line_str)) {
         stringstream ss(line_str);
-        if (!getline(ss, time_str, ','))
-        {
+        if (!getline(ss, time_str, ',')) {
             cerr << "[LoadSensorData]: Find a bad line in the file.: " << line_str;
             return false;
         }
@@ -43,14 +40,12 @@ bool LoadSensorData(string& sensor_data_file, unordered_map<string, string>* tim
     return true;
 }
 
-int main(int argc, char *argv[])
-{
-    if(argc != 2)
-	{
-		cerr << "./kaist_pub PATH_TO_FOLDER/YOUR_PATH_TO_DATASET/KAIST/urban28/urban28-pankyo \n" 
-			<< "For example: ./kaist_pub /home/wallong/dataset/urban28/urban28-pankyo"<< endl;
-		return -1;
-	}
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        cerr << "./kaist_pub PATH_TO_FOLDER/YOUR_PATH_TO_DATASET/KAIST/urban28/urban28-pankyo \n"
+             << "For example: ./kaist_pub /home/wallong/dataset/urban28/urban28-pankyo" << endl;
+        return -1;
+    }
     sData_path = argv[1];
 
     ros::init(argc, argv, "KAIST_pub");
@@ -65,47 +60,41 @@ int main(int argc, char *argv[])
     encoder_publisher = nh.advertise<custom_msgs::Encoder>("/encoder/data_raw", 100, true);
     gps_publisher = nh.advertise<sensor_msgs::NavSatFix>("/gps/data_raw", 100, true);
 
-    unordered_map<string, string> time_encoder_map;
-    string encoder_data_path = sData_path + "/sensor_data/encoder.csv";
-    if (!LoadSensorData(encoder_data_path, &time_encoder_map))
-    {
+    unordered_map <string, string> time_encoder_map;
+    string encoder_data_path = sData_path + "/urban39-pankyo_data/urban39-pankyo/sensor_data/encoder.csv";
+    if (!LoadSensorData(encoder_data_path, &time_encoder_map)) {
         cerr << "[PublishData]: Failed to load encoder data.";
         return -1;
     }
 
-    unordered_map<string, string> time_imu_map;
-    string imu_data_path = sData_path + "/sensor_data/xsens_imu.csv";
-    if (!LoadSensorData(imu_data_path, &time_imu_map))
-    {
+    unordered_map <string, string> time_imu_map;
+    string imu_data_path = sData_path + "/urban39-pankyo_data/urban39-pankyo/sensor_data/xsens_imu.csv";
+    if (!LoadSensorData(imu_data_path, &time_imu_map)) {
         cerr << "[PublishData]: Failed to load imu data.";
         return -1;
     }
 
-    string data_stamp_path = sData_path + "/sensor_data/data_stamp.csv";
-    ifstream file_data_stamp(data_stamp_path);
-    if (!file_data_stamp.is_open())
-    {
+    std::string data_stamp_path = sData_path + "/urban39-pankyo_data/urban39-pankyo/sensor_data/data_stamp.csv";
+    std::ifstream file_data_stamp(data_stamp_path);
+    if (!file_data_stamp.is_open()) {
         cerr << "[PublishData]: Failed to open data_stamp file.";
         return -1;
     }
 
-    unordered_map<string, string> time_gps_map;
-    string gps_data_path = sData_path + "/sensor_data/gps.csv";
-    if (!LoadSensorData(gps_data_path, &time_gps_map))
-    {
+    unordered_map <string, string> time_gps_map;
+    string gps_data_path = sData_path + "/urban39-pankyo_data/urban39-pankyo/sensor_data/gps.csv";
+    if (!LoadSensorData(gps_data_path, &time_gps_map)) {
         cerr << "[PublishData]: Failed to load GPS data.";
         return -1;
     }
 
-    vector<string> line_data_vec;
+    vector <string> line_data_vec;
     line_data_vec.reserve(17);
     string line_str, value_str;
-    while (getline(file_data_stamp, line_str) && ros::ok())
-    {
+    while (getline(file_data_stamp, line_str) && ros::ok()) {
         line_data_vec.clear();
         stringstream ss(line_str);
-        while (getline(ss, value_str, ','))
-        {
+        while (getline(ss, value_str, ',')) {
             line_data_vec.push_back(value_str);
         }
 
@@ -113,13 +102,12 @@ int main(int argc, char *argv[])
         const string time_str = line_data_vec[0];
         const double timestamp = stod(time_str) * kToSecond;
 
-        const string& sensor_type = line_data_vec[1];
-        if (sensor_type == "stereo")
-        {
-            const string img_file = sData_path + "/image/stereo_left/" + time_str + ".png";
-            const cv::Mat raw_image = cv::imread(img_file, CV_LOAD_IMAGE_ANYDEPTH);
-            if (raw_image.empty())
-            {
+        const string &sensor_type = line_data_vec[1];
+        if (sensor_type == "stereo") {
+            const string img_file =
+                    sData_path + "/urban39-pankyo_img/urban39-pankyo/image/stereo_left/" + time_str + ".png";
+            const cv::Mat raw_image = cv::imread(img_file, cv::IMREAD_ANYDEPTH);
+            if (raw_image.empty()) {
                 cerr << "[PublishData]: Failed to open image at time: " << time_str;
                 return -1;
             }
@@ -129,7 +117,7 @@ int main(int argc, char *argv[])
 
             cv::Mat gray_img;
             cv::cvtColor(color_img, gray_img, cv::COLOR_RGB2GRAY);
-            
+
             sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", gray_img).toImageMsg();;
             ros::Time stamp(timestamp);
             img_msg->header.stamp = stamp;
@@ -138,20 +126,17 @@ int main(int argc, char *argv[])
             // pSystem->PubImageData(timestamp, gray_img);
         }
 
-        if (sensor_type == "encoder")
-        {
-            if (time_encoder_map.find(time_str) == time_encoder_map.end())
-            {
+        if (sensor_type == "encoder") {
+            if (time_encoder_map.find(time_str) == time_encoder_map.end()) {
                 ROS_ERROR("[PublishData]: Failed to find encoder data at time: %s", time_str);
             }
-            const string& encoder_str = time_encoder_map.at(time_str);
+            const string &encoder_str = time_encoder_map.at(time_str);
             stringstream encoder_ss(encoder_str);
             line_data_vec.clear();
-            while (getline(encoder_ss, value_str, ','))
-            {
+            while (getline(encoder_ss, value_str, ',')) {
                 line_data_vec.push_back(value_str);
             }
-            
+
             custom_msgs::Encoder encoder_msg;
             ros::Time stamp(timestamp);
             encoder_msg.header.stamp = stamp;
@@ -161,17 +146,14 @@ int main(int argc, char *argv[])
             encoder_publisher.publish(encoder_msg);
         }
 
-        if (sensor_type == "gps")
-        {
-            if (time_gps_map.find(time_str) == time_gps_map.end())
-            {
+        if (sensor_type == "gps") {
+            if (time_gps_map.find(time_str) == time_gps_map.end()) {
                 ROS_ERROR("[PublishData]: Failed to find gps data at time: %s", time_str);
             }
-            const string& gps_str = time_gps_map.at(time_str);
+            const string &gps_str = time_gps_map.at(time_str);
             stringstream gps_ss(gps_str);
             line_data_vec.clear();
-            while (getline(gps_ss, value_str, ','))
-            {
+            while (getline(gps_ss, value_str, ',')) {
                 line_data_vec.push_back(value_str);
             }
 
@@ -179,30 +161,27 @@ int main(int argc, char *argv[])
             ros::Time stamp(timestamp);
             gps_msg.header.stamp = stamp;
             gps_msg.header.frame_id = "gps_frame";
-            gps_msg.status.status = sensor_msgs::NavSatStatus::STATUS_FIX; std::stoi(line_data_vec[1]);
+            gps_msg.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
+            std::stoi(line_data_vec[1]);
             gps_msg.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
             gps_msg.latitude = std::stod(line_data_vec[1]);
             gps_msg.longitude = std::stod(line_data_vec[2]);
             gps_msg.altitude = std::stod(line_data_vec[3]);
-            for (int i = 0; i < 9; i++)
-            {
+            for (int i = 0; i < 9; i++) {
                 gps_msg.position_covariance[i] = std::stod(line_data_vec[i + 4]) / 50;
             }
             gps_publisher.publish(gps_msg);
         }
 
-        if (sensor_type == "imu")
-        {
-            if (time_imu_map.find(time_str) == time_imu_map.end())
-            {
+        if (sensor_type == "imu") {
+            if (time_imu_map.find(time_str) == time_imu_map.end()) {
                 cerr << "[PublishData]: Failed to find imu data at time: " << time_str;
                 return -1;
             }
-            const string& imu_str = time_imu_map.at(time_str);
+            const string &imu_str = time_imu_map.at(time_str);
             stringstream imu_ss(imu_str);
             line_data_vec.clear();
-            while (getline(imu_ss, value_str, ','))
-            {
+            while (getline(imu_ss, value_str, ',')) {
                 line_data_vec.push_back(value_str);
             }
 
@@ -224,11 +203,11 @@ int main(int argc, char *argv[])
             imu_msg.linear_acceleration.y = std::stod(line_data_vec[12]);
             imu_msg.linear_acceleration.z = std::stod(line_data_vec[13]);
             imu_publisher.publish(imu_msg);
-            usleep(10000*nDelayTimes); // usleep 1e-6, 5000*2 = 10000为10ms, 100hz
+            usleep(10000 * nDelayTimes); // usleep 1e-6, 5000*2 = 10000为10ms, 100hz
         }
     }
     ros::shutdown();
-    
+
     return 0;
 }
 
