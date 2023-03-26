@@ -24,6 +24,7 @@ std::string EX_CALIB_RESULT_PATH;
 std::string VINS_RESULT_PATH;
 std::string IMU_TOPIC;
 std::string ENCODER_TOPIC; // 轮速计topic
+std::string WO_TOPIC;
 double ROW, COL;
 double TD, TR;
 
@@ -60,6 +61,7 @@ void readParameters(ros::NodeHandle &n)
 
     fsSettings["imu_topic"] >> IMU_TOPIC;
     fsSettings["encoder_topic"] >> ENCODER_TOPIC; // 轮速计topic
+//    fsSettings["wo_topic"] >> WO_TOPIC:
 
     SOLVER_TIME = fsSettings["max_solver_time"];
     NUM_ITERATIONS = fsSettings["max_num_iterations"];
